@@ -1,0 +1,21 @@
+{
+  "name": "billz",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "cd apps/api && pnpm dev",
+    "dev:web": "cd apps/web && pnpm dev",
+    "build": "cd apps/web && pnpm build",
+    "start": "cd apps/api && pnpm start",
+    "render-build": "pnpm install && cd apps/web && pnpm install && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "concurrently": "^9.1.0"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.2.108"
+  }
+}

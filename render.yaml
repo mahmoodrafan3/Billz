@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: billz
+    runtime: node
+    plan: free
+    buildCommand: |
+      npm install -g pnpm
+      pnpm install
+      cd apps/web && pnpm install && pnpm build
+      pip install pymupdf
+    startCommand: cd apps/api && pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.11"
+    healthCheckPath: /api/health
+    autoDeploy: true
