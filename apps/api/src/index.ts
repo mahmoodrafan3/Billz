@@ -33,7 +33,9 @@ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 // ── Serve React frontend ──
-const frontendPath = path.join(__dirname, "../../apps/web/dist");
+const frontendPath = path.join(process.cwd(), "../web/dist");
+console.log(`📂 Serving frontend from: ${frontendPath}`);
+console.log(`📂 Frontend exists: ${fs.existsSync(frontendPath)}`);
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
 }
@@ -266,11 +268,14 @@ app.delete("/api/jobs/:jobId", (req, res) => {
 });
 
 // ── SPA fallback: serve index.html for all non-API routes ──
-if (fs.existsSync(frontendPath)) {
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
-  });
-}
+app.get("*", (req, res) => {
+  const indexPath = path.join(frontendPath, "index.html");
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: "Frontend not found", frontendPath });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
