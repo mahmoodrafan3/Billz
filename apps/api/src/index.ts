@@ -34,8 +34,6 @@ fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 // ── Serve React frontend ──
 const frontendPath = path.join(process.cwd(), "../web/dist");
-console.log(`📂 Serving frontend from: ${frontendPath}`);
-console.log(`📂 Frontend exists: ${fs.existsSync(frontendPath)}`);
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
 }
