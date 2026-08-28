@@ -3,8 +3,8 @@ services:
     name: billz
     runtime: node
     plan: free
-    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && cd apps/web && pnpm install && pnpm build && pip install pymupdf
-    startCommand: cd apps/api && pnpm start
+    buildCommand: npx pnpm install && cd apps/web && npx pnpm install && npx pnpm build && pip install pymupdf
+    startCommand: cd apps/api && npx tsx src/index.ts
     envVars:
       - key: NODE_ENV
         value: production
