@@ -124,7 +124,7 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Bill Splitter</h1>
+            <h1 className="text-xl font-bold text-gray-900">Billz - Bill Splitter</h1>
             <p className="text-sm text-gray-500">Separate combined PDF bills instantly</p>
           </div>
         </div>
@@ -377,7 +377,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="text-center py-6 text-sm text-gray-400">
-        Bill Splitter — For wholesale medical shops
+        Made by Rafan❤️
       </footer>
     </div>
   );
