@@ -3,7 +3,7 @@ services:
     name: billz
     runtime: node
     plan: free
-    buildCommand: npm install -g pnpm && pnpm install && cd apps/web && pnpm install && pnpm build && pip install pymupdf
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && cd apps/web && pnpm install && pnpm build && pip install pymupdf
     startCommand: cd apps/api && pnpm start
     envVars:
       - key: NODE_ENV
