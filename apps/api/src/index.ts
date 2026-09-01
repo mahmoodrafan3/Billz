@@ -19,64 +19,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// ── Contacts: pharmacy name → WhatsApp number ──
-const CONTACTS_PATH = path.join(__dirname, "contacts.json");
-
-function loadContacts(): Record<string, string> {
-  if (!fs.existsSync(CONTACTS_PATH)) return {};
-  return JSON.parse(fs.readFileSync(CONTACTS_PATH, "utf-8"));
-}
-
-function saveContacts(contacts: Record<string, string>) {
-  fs.writeFileSync(CONTACTS_PATH, JSON.stringify(contacts, null, 2));
-}
-
 // ── Health check ──
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
-});
-
-// ── Get all contacts ──
-app.get("/api/contacts", (_req, res) => {
-  res.json(loadContacts());
-});
-
-// ── Save a contact ──
-app.post("/api/contacts", (req, res) => {
-  const { name, phone } = req.body;
-  if (!name || !phone) {
-    return res.status(400).json({ error: "name and phone required" });
-  }
-  const contacts = loadContacts();
-  contacts[name] = phone;
-  saveContacts(contacts);
-  res.json({ success: true, contacts });
-});
-
-// ── Update a contact ──
-app.put("/api/contacts/:name", (req, res) => {
-  const contacts = loadContacts();
-  const decoded = decodeURIComponent(req.params.name);
-  const { name, phone } = req.body;
-  if (!name || !phone) {
-    return res.status(400).json({ error: "name and phone required" });
-  }
-  // If name changed, remove old key
-  if (decoded !== name) {
-    delete contacts[decoded];
-  }
-  contacts[name] = phone;
-  saveContacts(contacts);
-  res.json({ success: true, contacts });
-});
-
-// ── Delete a contact ──
-app.delete("/api/contacts/:name", (req, res) => {
-  const contacts = loadContacts();
-  const decoded = decodeURIComponent(req.params.name);
-  delete contacts[decoded];
-  saveContacts(contacts);
-  res.json({ success: true, contacts });
 });
 
 // ── Directories ──
