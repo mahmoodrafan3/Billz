@@ -119,43 +119,40 @@ export default function App() {
 
   // ── WhatsApp share ──
   const handleSendWhatsApp = async (bill: Bill) => {
-    const phone = contacts[bill.name];
-    if (!phone) {
-      setShareStatus(`⚠️ No phone number saved for "${bill.name}". Click "Contacts" to add one.`);
-      setTimeout(() => setShareStatus(null), 4000);
-      return;
-    }
-
+    const phone = contacts[bill.name] || "";
     const cleanPhone = phone.replace(/[^0-9]/g, "");
-    const message = encodeURIComponent(`Bill for ${bill.name}`);
 
-    // Try Web Share API (mobile browsers) — share image file directly
-    if (isMobile && navigator.share) {
+    // Mobile: try Web Share API first (opens native share sheet with WhatsApp)
+    if (navigator.share && navigator.canShare) {
       try {
         setShareStatus("Preparing image...");
         const res = await fetch(bill.previewUrl);
         const blob = await res.blob();
         const file = new File([blob], `${bill.name}.png`, { type: "image/png" });
 
-        await navigator.share({
-          title: bill.name,
-          files: [file],
-        });
-        setShareStatus(null);
-        return;
-      } catch (err: any) {
-        if (err.name === "AbortError") {
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: bill.name,
+            files: [file],
+          });
           setShareStatus(null);
           return;
         }
+      } catch (err: any) {
+        setShareStatus(null);
+        if (err.name === "AbortError") return; // User cancelled
         // Fall through to wa.me
       }
     }
 
-    // Desktop / fallback: open WhatsApp chat — user attaches image manually
-    setShareStatus(`Opening WhatsApp for ${bill.name}... Save the image, then attach it.`);
-    setTimeout(() => setShareStatus(null), 5000);
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+    // Fallback: open WhatsApp chat directly
+    if (cleanPhone) {
+      const message = encodeURIComponent(`Bill for ${bill.name}`);
+      window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+    } else {
+      setShareStatus(`⚠️ No phone number for "${bill.name}". Open Contacts to add one.`);
+      setTimeout(() => setShareStatus(null), 4000);
+    }
   };
 
   // ── Save contact ──
