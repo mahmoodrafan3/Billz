@@ -213,21 +213,20 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <header className="bg-white shadow-sm border-b">          <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Billz - Bill Splitter</h1>
-            <p className="text-sm text-gray-500">Separate combined PDF bills instantly</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Billz - Bill Splitter</h1>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">Separate combined PDF bills instantly</p>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
         {/* Upload Section */}
         {!result && (
           <div className="space-y-6">
@@ -238,7 +237,7 @@ export default function App() {
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all ${
+              className={`border-2 border-dashed rounded-2xl p-6 sm:p-12 text-center cursor-pointer transition-all ${
                 dragActive
                   ? "border-blue-500 bg-blue-50"
                   : file
@@ -319,7 +318,7 @@ export default function App() {
         {result && (
           <div className="space-y-6">
             {/* Summary Card */}
-            <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">Bills Ready!</h2>
@@ -358,15 +357,15 @@ export default function App() {
 
               {/* Share status message */}
               {shareStatus && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm mb-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 sm:p-3 text-yellow-800 text-xs sm:text-sm mb-3 sm:mb-4">
                   {shareStatus}
                 </div>
               )}
 
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button
                   onClick={handleDownloadAll}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 text-sm"
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -375,22 +374,22 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setShowContacts(!showContacts)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 text-sm"
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
                 >
                   📱 Contacts
                 </button>
-                <span className="text-sm text-gray-400 self-center">
-                  {filteredBills.length} of {result.bills.length} shown
-                </span>
               </div>
+              <span className="text-xs text-gray-400 text-center sm:text-left">
+                {filteredBills.length} of {result.bills.length} shown
+              </span>
             </div>
 
             {/* Bills Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {filteredBills.map((bill) => (
                 <div
                   key={bill.id}
-                  className="bg-white rounded-xl border shadow-sm p-4 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl border shadow-sm p-3 sm:p-4 hover:shadow-md transition-shadow"
                 >
                   {/* Preview Image */}
                   <div
@@ -447,26 +446,24 @@ export default function App() {
             )}
           </div>
         )}
-      </main>
-
-      {/* Fullscreen Image Modal */}
+      </main>      {/* Fullscreen Image Modal */}
       {selectedImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-2 sm:p-4"
           onClick={() => setSelectedImage(null)}
         >
           {/* Close button */}
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+            className="absolute top-2 right-2 sm:top-4 sm:right-4 text-white hover:text-gray-300 z-10 p-2"
           >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
           {/* Image name */}
-          <div className="absolute top-4 left-4 text-white text-sm font-medium bg-black/50 px-3 py-1.5 rounded-lg z-10">
+          <div className="absolute top-2 left-2 sm:top-4 sm:left-4 text-white text-xs sm:text-sm font-medium bg-black/50 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg z-10 max-w-[60%] truncate">
             {selectedImage.name}
           </div>
 
@@ -474,7 +471,7 @@ export default function App() {
           <img
             src={selectedImage.src}
             alt={selectedImage.name}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="max-w-full max-h-[85vh] sm:max-h-full object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
 
@@ -482,7 +479,7 @@ export default function App() {
           <a
             href={selectedImage.src}
             download={`${selectedImage.name}.png`}
-            className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 text-gray-900 font-medium py-2 px-4 rounded-lg shadow-lg flex items-center gap-2 text-sm z-10"
+            className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 bg-white hover:bg-gray-100 text-gray-900 font-medium py-2 px-3 sm:px-4 rounded-lg shadow-lg flex items-center gap-2 text-xs sm:text-sm z-10"
             onClick={(e) => e.stopPropagation()}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,8 +492,8 @@ export default function App() {
 
       {/* Contacts Panel */}
       {showContacts && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowContacts(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center sm:p-4" onClick={() => setShowContacts(false)}>
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] sm:max-h-[80vh] overflow-y-auto p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold">📱 WhatsApp Contacts <span className="text-sm font-normal text-gray-400">({Object.entries(contacts).filter(([name, phone]) => name.toLowerCase().includes(contactSearch.toLowerCase()) || phone.toLowerCase().includes(contactSearch.toLowerCase())).length}{contactSearch ? ` of ${Object.keys(contacts).length}` : ''})</span></h3>
               <button onClick={() => setShowContacts(false)} className="text-gray-400 hover:text-gray-600">
@@ -525,7 +522,7 @@ export default function App() {
             </div>
 
             {/* Add new contact */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <input
                 type="text"
                 placeholder="Pharmacy name"
@@ -550,14 +547,14 @@ export default function App() {
             </div>
 
             {/* Contact list */}
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[40vh] sm:max-h-none overflow-y-auto">
               {Object.entries(contacts)
                 .filter(([name, phone]) =>
                   name.toLowerCase().includes(contactSearch.toLowerCase()) ||
                   phone.toLowerCase().includes(contactSearch.toLowerCase())
                 )
                 .map(([name, phone]) => (
-                <div key={name} className="bg-gray-50 rounded-lg p-3">
+                <div key={name} className="bg-gray-50 rounded-lg p-2.5 sm:p-3">
                   {editingContact === name ? (
                     /* Edit mode */
                     <div className="flex flex-col gap-2">
@@ -593,12 +590,12 @@ export default function App() {
                     </div>
                   ) : (
                     /* View mode */
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{name}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{name}</p>
                         <p className="text-xs text-gray-500">{phone}</p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 sm:gap-2 shrink-0">
                         <button
                           onClick={() => {
                             setEditingContact(name);
