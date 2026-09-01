@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 
 interface Bill {
@@ -26,7 +26,24 @@ export default function App() {
   const [dragActive, setDragActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedImage, setSelectedImage] = useState<{ src: string; name: string } | null>(null);
+  const [contacts, setContacts] = useState<Record<string, string>>({});
+  const [showContacts, setShowContacts] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
+  const [editingContact, setEditingContact] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [contactSearch, setContactSearch] = useState("");
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load contacts on mount
+  useEffect(() => {
+    fetch("/api/contacts")
+      .then((r) => r.json())
+      .then(setContacts)
+      .catch(() => {});
+  }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -95,6 +112,85 @@ export default function App() {
     if (result?.jobId) {
       window.open(`/api/download-all/${result.jobId}`, "_blank");
     }
+  };
+
+  // ── WhatsApp share ──
+  const handleSendWhatsApp = async (bill: Bill) => {
+    const phone = contacts[bill.name];
+    if (!phone) {
+      setShareStatus(`⚠️ No phone number saved for "${bill.name}". Click "Contacts" to add one.`);
+      setTimeout(() => setShareStatus(null), 4000);
+      return;
+    }
+
+    // Clean phone: remove +, spaces, dashes
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const message = encodeURIComponent(`Bill for ${bill.name}`);
+
+    // Try Web Share API first (works great on mobile)
+    if (navigator.share) {
+      try {
+        setShareStatus("Loading image...");
+        const res = await fetch(bill.previewUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `${bill.name}.png`, { type: "image/png" });
+
+        await navigator.share({
+          title: `Bill - ${bill.name}`,
+          text: `Bill for ${bill.name}`,
+          files: [file],
+        });
+        setShareStatus(null);
+        return;
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          setShareStatus(null);
+          return; // User cancelled
+        }
+        // Fall through to wa.me link
+      }
+    }
+
+    // Fallback: open WhatsApp with number + text (user attaches image manually)
+    setShareStatus(`Opening WhatsApp for ${bill.name}... Download the image first, then attach it.`);
+    setTimeout(() => setShareStatus(null), 5000);
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
+  };
+
+  // ── Save contact ──
+  const handleSaveContact = async () => {
+    if (!newContactName || !newContactPhone) return;
+    const res = await fetch("/api/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newContactName, phone: newContactPhone }),
+    });
+    const data = await res.json();
+    setContacts(data.contacts);
+    setNewContactName("");
+    setNewContactPhone("");
+  };
+
+  // ── Edit contact ──
+  const handleEditContact = async () => {
+    if (!editingContact || !editName || !editPhone) return;
+    const res = await fetch(`/api/contacts/${encodeURIComponent(editingContact)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editName, phone: editPhone }),
+    });
+    const data = await res.json();
+    setContacts(data.contacts);
+    setEditingContact(null);
+    setEditName("");
+    setEditPhone("");
+  };
+
+  // ── Delete contact ──
+  const handleDeleteContact = async (name: string) => {
+    const res = await fetch(`/api/contacts/${encodeURIComponent(name)}`, { method: "DELETE" });
+    const data = await res.json();
+    setContacts(data.contacts);
   };
 
   const handleReset = () => {
@@ -259,7 +355,14 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              {/* Share status message */}
+              {shareStatus && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm mb-4">
+                  {shareStatus}
+                </div>
+              )}
+
+              <div className="flex gap-3 flex-wrap">
                 <button
                   onClick={handleDownloadAll}
                   className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 text-sm"
@@ -268,6 +371,12 @@ export default function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                   Download All ({result.totalBills} bills)
+                </button>
+                <button
+                  onClick={() => setShowContacts(!showContacts)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 text-sm"
+                >
+                  📱 Contacts
                 </button>
                 <span className="text-sm text-gray-400 self-center">
                   {filteredBills.length} of {result.bills.length} shown
@@ -311,13 +420,21 @@ export default function App() {
                     {bill.pageInfo}
                   </p>
 
-                  <a
-                    href={bill.previewUrl}
-                    download={`${bill.name}.png`}
-                    className="block w-full text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                  >
-                    Download Image
-                  </a>
+                  <div className="flex gap-2">
+                    <a
+                      href={bill.previewUrl}
+                      download={`${bill.name}.png`}
+                      className="flex-1 text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                    >
+                      Download
+                    </a>
+                    <button
+                      onClick={() => handleSendWhatsApp(bill)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-1"
+                    >
+                      📱 Send
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -372,6 +489,151 @@ export default function App() {
             </svg>
             Download
           </a>
+        </div>
+      )}
+
+      {/* Contacts Panel */}
+      {showContacts && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowContacts(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">📱 WhatsApp Contacts <span className="text-sm font-normal text-gray-400">({Object.entries(contacts).filter(([name, phone]) => name.toLowerCase().includes(contactSearch.toLowerCase()) || phone.toLowerCase().includes(contactSearch.toLowerCase())).length}{contactSearch ? ` of ${Object.keys(contacts).length}` : ''})</span></h3>
+              <button onClick={() => setShowContacts(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Map pharmacy names (from the bill) to their WhatsApp numbers.
+            </p>
+
+            {/* Search contacts */}
+            <div className="relative mb-4">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            {/* Add new contact */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Pharmacy name"
+                value={newContactName}
+                onChange={(e) => setNewContactName(e.target.value)}
+                className="flex-1 border rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                type="tel"
+                placeholder="Phone number"
+                value={newContactPhone}
+                onChange={(e) => setNewContactPhone(e.target.value)}
+                maxLength={10}
+                className="w-36 border rounded-lg px-3 py-2 text-sm"
+              />
+              <button
+                onClick={handleSaveContact}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Contact list */}
+            <div className="space-y-2">
+              {Object.entries(contacts)
+                .filter(([name, phone]) =>
+                  name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                  phone.toLowerCase().includes(contactSearch.toLowerCase())
+                )
+                .map(([name, phone]) => (
+                <div key={name} className="bg-gray-50 rounded-lg p-3">
+                  {editingContact === name ? (
+                    /* Edit mode */
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="border rounded-lg px-3 py-1.5 text-sm"
+                        placeholder="Pharmacy name"
+                      />
+                      <input
+                        type="tel"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        maxLength={10}
+                        className="border rounded-lg px-3 py-1.5 text-sm"
+                        placeholder="Phone number"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleEditContact}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingContact(null)}
+                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* View mode */
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{name}</p>
+                        <p className="text-xs text-gray-500">{phone}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingContact(name);
+                            setEditName(name);
+                            setEditPhone(phone);
+                          }}
+                          className="text-blue-400 hover:text-blue-600 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteContact(name)}
+                          className="text-red-400 hover:text-red-600 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {Object.keys(contacts).length === 0 && (
+                <p className="text-center text-gray-400 text-sm py-4">
+                  No contacts yet. Add pharmacies above.
+                </p>
+              )}
+              {Object.keys(contacts).length > 0 && Object.entries(contacts).filter(([name, phone]) =>
+                name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                phone.toLowerCase().includes(contactSearch.toLowerCase())
+              ).length === 0 && (
+                <p className="text-center text-gray-400 text-sm py-4">
+                  No contacts match "{contactSearch}"
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
