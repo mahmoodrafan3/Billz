@@ -114,6 +114,9 @@ export default function App() {
     }
   };
 
+  // ── Detect mobile ──
+  const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   // ── WhatsApp share ──
   const handleSendWhatsApp = async (bill: Bill) => {
     const phone = contacts[bill.name];
@@ -123,21 +126,19 @@ export default function App() {
       return;
     }
 
-    // Clean phone: remove +, spaces, dashes
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const message = encodeURIComponent(`Bill for ${bill.name}`);
 
-    // Try Web Share API first (works great on mobile)
-    if (navigator.share) {
+    // Try Web Share API (mobile browsers) — share image file directly
+    if (isMobile && navigator.share) {
       try {
-        setShareStatus("Loading image...");
+        setShareStatus("Preparing image...");
         const res = await fetch(bill.previewUrl);
         const blob = await res.blob();
         const file = new File([blob], `${bill.name}.png`, { type: "image/png" });
 
         await navigator.share({
-          title: `Bill - ${bill.name}`,
-          text: `Bill for ${bill.name}`,
+          title: bill.name,
           files: [file],
         });
         setShareStatus(null);
@@ -145,14 +146,14 @@ export default function App() {
       } catch (err: any) {
         if (err.name === "AbortError") {
           setShareStatus(null);
-          return; // User cancelled
+          return;
         }
-        // Fall through to wa.me link
+        // Fall through to wa.me
       }
     }
 
-    // Fallback: open WhatsApp with number + text (user attaches image manually)
-    setShareStatus(`Opening WhatsApp for ${bill.name}... Download the image first, then attach it.`);
+    // Desktop / fallback: open WhatsApp chat — user attaches image manually
+    setShareStatus(`Opening WhatsApp for ${bill.name}... Save the image, then attach it.`);
     setTimeout(() => setShareStatus(null), 5000);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
   };
@@ -432,7 +433,7 @@ export default function App() {
                       onClick={() => handleSendWhatsApp(bill)}
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-1"
                     >
-                      📱 Send
+                      📱 {isMobile ? "Share" : "Send"}
                     </button>
                   </div>
                 </div>
