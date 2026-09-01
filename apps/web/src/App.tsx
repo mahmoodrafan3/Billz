@@ -121,8 +121,9 @@ export default function App() {
   const handleSendWhatsApp = async (bill: Bill) => {
     const phone = contacts[bill.name] || "";
     const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const message = encodeURIComponent(`Bill for ${bill.name}`);
 
-    // Mobile: try Web Share API first (opens native share sheet with WhatsApp)
+    // Mobile: use Web Share API to share the image file directly
     if (navigator.share && navigator.canShare) {
       try {
         setShareStatus("Preparing image...");
@@ -133,6 +134,7 @@ export default function App() {
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: bill.name,
+            text: `Bill for ${bill.name}`,
             files: [file],
           });
           setShareStatus(null);
@@ -141,13 +143,11 @@ export default function App() {
       } catch (err: any) {
         setShareStatus(null);
         if (err.name === "AbortError") return; // User cancelled
-        // Fall through to wa.me
       }
     }
 
-    // Fallback: open WhatsApp chat directly
+    // Fallback: open WhatsApp directly with the number + text
     if (cleanPhone) {
-      const message = encodeURIComponent(`Bill for ${bill.name}`);
       window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
     } else {
       setShareStatus(`⚠️ No phone number for "${bill.name}". Open Contacts to add one.`);
